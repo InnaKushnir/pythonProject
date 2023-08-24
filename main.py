@@ -48,34 +48,40 @@ parameter_names = ['temp_air', 'relative_humidity', 'ghi', 'dni', 'dhi', 'IR', '
 
 energies = {}
 target_date_ = [pd.Timestamp(2023, 8, 22), pd.Timestamp(2023, 8, 23)]
-weather_data = {}
+weather_data = []
+
 for target_date in target_date_:
     for i, values in enumerate(values_data):
         parameter_name = parameter_names[i]  # Отримуємо ім'я погодного параметра
-        weather_data[parameter_name] = {}  # Створюємо словник для цього параметра
+        weather_ = {}
         for j, val in enumerate(values):
             hour = j % 24
             date = target_date + pd.Timedelta(hours=hour)
-            weather_data[parameter_name][date] = val
-for parameter_name, parameter_values in weather_data.items():
-    print(parameter_name)
-    for date, value in parameter_values.items():
-        print(date, value)
+            weather_[date] = val
+        weather_data.append(weather_)
 
-
-print(weather_data['temp_air'], type(weather_data))
 hourly_energy_data = pd.DataFrame(index=pd.date_range(target_date_[0], periods=24, freq='H'))
-for location, weather in zip(coordinates, weather_data.values()):
+year = 2023
+month = 8
+day = 22
+hour = 0
+
+# Створюємо об'єкт pd.Timestamp
+target_time = pd.Timestamp(year=year, month=month, day=day, hour=hour)
+for location, weather in zip(coordinates, weather_data):
     latitude, longitude, name, altitude, timezone = location
     system['surface_tilt'] = latitude
     solpos = pvlib.solarposition.get_solarposition(
-        time=pd.to_datetime(list(weather.keys())),
+        time=target_time,
         latitude=latitude,
         longitude=longitude,
         altitude=altitude,
-        temperature=weather_data["temp_air"],
+        temperature=25,
         pressure=pvlib.atmosphere.alt2pres(altitude),
     )
+
+print(solpos.all())
+
 
     # dni_extra = pvlib.irradiance.get_extra_radiation(weather.index)
     # airmass = pvlib.atmosphere.get_relative_airmass(solpos['apparent_zenith'])
