@@ -7,9 +7,9 @@ from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 
 coordinates = [
     (32.2, -111.0, 'Tucson', 700, 'Etc/GMT+7'),
-    (35.1, -106.6, 'Albuquerque', 1500, 'Etc/GMT+7'),
-    (37.8, -122.4, 'San Francisco', 10, 'Etc/GMT+8'),
-    (52.5, 13.4, 'Berlin', 34, 'Etc/GMT-1'),
+    # (35.1, -106.6, 'Albuquerque', 1500, 'Etc/GMT+7'),
+    # (37.8, -122.4, 'San Francisco', 10, 'Etc/GMT+8'),
+    # (52.5, 13.4, 'Berlin', 34, 'Etc/GMT-1'),
 ]
 sandia_modules = pvlib.pvsystem.retrieve_sam('SandiaMod')
 
@@ -19,7 +19,7 @@ module = sandia_modules['Canadian_Solar_CS5P_220M___2009_']
 
 inverter = sapm_inverters['ABB__MICRO_0_25_I_OUTD_US_208__208V_']
 
-# temperature_model_parameters = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
+temperature_model_parameters = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
 # tmys = []
 #
 # for location in coordinates:
@@ -65,7 +65,7 @@ year = 2023
 month = 8
 day = 22
 hour = 0
-
+print(weather_data[3][pd.Timestamp('2023-08-22 00:00:00')])
 # Створюємо об'єкт pd.Timestamp
 target_time = pd.Timestamp(year=year, month=month, day=day, hour=hour)
 for location, weather in zip(coordinates, weather_data):
@@ -80,49 +80,53 @@ for location, weather in zip(coordinates, weather_data):
         pressure=pvlib.atmosphere.alt2pres(altitude),
     )
 
-print(solpos.all())
-
-
-    # dni_extra = pvlib.irradiance.get_extra_radiation(weather.index)
-    # airmass = pvlib.atmosphere.get_relative_airmass(solpos['apparent_zenith'])
-    # pressure = pvlib.atmosphere.alt2pres(altitude)
-    # am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, pressure)
-    # aoi = pvlib.irradiance.aoi(
-    #     system['surface_tilt'],
-    #     system['surface_azimuth'],
-    #     solpos["apparent_zenith"],
-    #     solpos["azimuth"],
-    # )
-    # total_irradiance = pvlib.irradiance.get_total_irradiance(
-    #     system['surface_tilt'],
-    #     system['surface_azimuth'],
-    #     solpos['apparent_zenith'],
-    #     solpos['azimuth'],
-    #     weather['dni'],
-    #     weather['ghi'],
-    #     weather['dhi'],
-    #     dni_extra=dni_extra,
-    #     model='haydavies',
-    # )
-    # cell_temperature = pvlib.temperature.sapm_cell(
-    #     total_irradiance['poa_global'],
-    #     weather["temp_air"],
-    #     weather["wind_speed"],
-    #     **temperature_model_parameters,
-    # )
-    # effective_irradiance = pvlib.pvsystem.sapm_effective_irradiance(
-    #     total_irradiance['poa_direct'],
-    #     total_irradiance['poa_diffuse'],
-    #     am_abs,
-    #     aoi,
-    #     module,
-    # )
-    # dc = pvlib.pvsystem.sapm(effective_irradiance, cell_temperature, module)
-    # ac = pvlib.inverter.sandia(dc['v_mp'], dc['p_mp'], inverter)
-    # annual_energy = ac.sum()
-    # hourly_energy_data[name] = ac
-    # print(hourly_energy_data[name])
-    # energies[name] = annual_energy
+    dni_extra = pvlib.irradiance.get_extra_radiation(target_time)
+    airmass = pvlib.atmosphere.get_relative_airmass(solpos['apparent_zenith'])
+    pressure = pvlib.atmosphere.alt2pres(altitude)
+    am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, pressure)
+    aoi = pvlib.irradiance.aoi(
+        system['surface_tilt'],
+        system['surface_azimuth'],
+        solpos["apparent_zenith"],
+        solpos["azimuth"],
+    )
+    total_irradiance = pvlib.irradiance.get_total_irradiance(
+        system['surface_tilt'],
+        system['surface_azimuth'],
+        solpos['apparent_zenith'],
+        solpos['azimuth'],
+        weather_data[3][pd.Timestamp('2023-08-22 00:00:00')],
+        weather_data[4][pd.Timestamp('2023-08-22 00:00:00')],
+        weather_data[5][pd.Timestamp('2023-08-22 00:00:00')],
+        dni_extra=dni_extra,
+        model='haydavies',
+    )
+    # print(solpos.all())
+    # print(dni_extra, type(dni_extra))
+    # print(airmass, type(airmass))
+    # print(pressure, type(pressure))
+    # print(am_abs, type(am_abs))
+    # print(aoi, type(aoi))
+    # print(total_irradiance, type(total_irradiance))
+    cell_temperature = pvlib.temperature.sapm_cell(
+        total_irradiance['poa_global'],
+        weather_data[0][pd.Timestamp('2023-08-22 00:00:00')],
+        weather_data[6][pd.Timestamp('2023-08-22 00:00:00')],
+        **temperature_model_parameters,
+    )
+    effective_irradiance = pvlib.pvsystem.sapm_effective_irradiance(
+        total_irradiance['poa_direct'],
+        total_irradiance['poa_diffuse'],
+        am_abs,
+        aoi,
+        module,
+    )
+    dc = pvlib.pvsystem.sapm(effective_irradiance, cell_temperature, module)
+    ac = pvlib.inverter.sandia(dc['v_mp'], dc['p_mp'], inverter)
+    annual_energy = ac.sum()
+    hourly_energy_data[name] = ac
+    print(hourly_energy_data[name])
+    energies[name] = annual_energy
 # energies = pd.Series(energies)
 # print(energies, hourly_energy_data[name])
 # energies.plot(kind='bar', rot=0)
