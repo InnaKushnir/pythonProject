@@ -58,7 +58,7 @@ hourly_energy_data = pd.DataFrame(index=pd.date_range(target_date_[0], periods=2
 for target_date in target_date_:
     for i in range(24):
         weather = weather_data[i]
-        latitude, longitude, name, altitude, timezone = coordinates[0]
+        latitude, longitude, name, altitude, timezone = coordinates[3]
         system['surface_tilt'] = latitude
         date = target_date + pd.Timedelta(hours=i)
         solpos = pvlib.solarposition.get_solarposition(
