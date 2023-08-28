@@ -70,7 +70,6 @@ for target_date in target_date_:
             pressure=pvlib.atmosphere.alt2pres(altitude),
         )
 
-
         dni_extra = pvlib.irradiance.get_extra_radiation(list(weather.keys())[0]) #pd.Timestamp('2023-08-22 00:00:00')
         airmass = pvlib.atmosphere.get_relative_airmass(solpos['apparent_zenith'])
         pressure = pvlib.atmosphere.alt2pres(altitude)
@@ -116,6 +115,9 @@ for target_date in target_date_:
 energies = pd.Series(energies)
 print(energies, hourly_energy_data)
 energies.plot(kind='bar', rot=0)
+# energies = pd.Series(energies)
+# print(energies, hourly_energy_data[name])
+# energies.plot(kind='bar', rot=0)
 # latitude = 40.7128
 # longitude = -74.0060
 #
